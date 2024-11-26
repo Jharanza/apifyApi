@@ -32,7 +32,7 @@ async def root():
 
 @app.post('/api/reels/{username}/start')
 async def start_reels_processing(username: str):
-    """Start the actor asynchronously and fetch reels automatically"""
+    """Start the actor asynchronously and return the runId"""
     try:
         run_input = {
             'username': [username],
@@ -42,30 +42,10 @@ async def start_reels_processing(username: str):
         run = client.actor("xMc5Ga1oCONPmWJIa").start(run_input=run_input)
         run_id = run["id"]
 
-        # Wait for the actor to complete
-        import time
-        while True:
-            run_status = client.run(run_id).get()
-            if run_status["status"] in ["SUCCEEDED", "FAILED"]:
-                break
-            time.sleep(5)  # Poll every 5 seconds
-
-        if run_status["status"] == "SUCCEEDED":
-            # Fetch reels data and save it to `reels_storage`
-            dataset_id = run_status["defaultDatasetId"]
-            reels = []
-            for item in client.dataset(dataset_id).iterate_items():
-                reels.append({
-                    "type": item.get("type"),
-                    "media_url": item.get("videoUrl") or item.get("imageUrl"),
-                    "post_url": item.get("url"),
-                })
-            reels_storage[run_id] = reels
-
-        return {"message": "Actor completed and reels fetched", "runId": run_id}
+        # Return the runId immediately
+        return {"message": "Actor started", "runId": run_id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting or processing actor: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Error starting actor: {str(e)}")
 
 @app.get('/api/reels/{run_id}/status')
 async def get_actor_status(run_id: str):
