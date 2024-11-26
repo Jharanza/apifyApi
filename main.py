@@ -52,7 +52,7 @@ async def get_reels (username: str):
     """ Endpoint to get the lasts reels and save it in a json file """
     try:
         run_input = {
-            'username': [username],
+            'username': ['hotelzamora'],
             'resultsLimit': 3,
         }
 
