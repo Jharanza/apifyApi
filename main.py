@@ -17,6 +17,12 @@ app = FastAPI()
 
 DATA_FILE = Path('reels_data_json')
 
+@app.get("/")
+async def root():
+    """ Ruta raíz """
+    return {"message": "Api ok"}
+
+
 def save_data_to_file (data):
     """ Save the data into a json file """
     with open(DATA_FILE, 'w', encoding='utf-8') as file:
