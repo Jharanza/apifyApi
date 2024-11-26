@@ -11,7 +11,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Cambiar "*" por un dominio específico si es necesario
+    allow_origins=["https://ig-zh.vercel.app"], # Cambiar "*" por un dominio específico si es necesario
     allow_credentials=True,
     allow_methods=["*"],  # Métodos HTTP permitidos
     allow_headers=["*"],  # Cabeceras HTTP permitidas
