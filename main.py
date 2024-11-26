@@ -6,7 +6,6 @@ from pathlib import Path
 import json
 
 
-
 app = FastAPI()
 
 app.add_middleware(
@@ -28,11 +27,6 @@ client = ApifyClient(API_TOKEN)
 
 DATA_FILE = Path('reels_data_json')
 
-@app.get("/")
-async def root():
-    """ Ruta raíz """
-    return {"message": "Cors correctly configured"}
-
 
 def save_data_to_file (data):
     """ Save the data into a json file """
@@ -46,6 +40,57 @@ def load_data_from_file ():
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     return []
+
+@app.get("/")
+async def root():
+    """ Ruta raíz """
+    return {"message": "Cors correctly configured"}
+
+@app.post('/api/reels/{username}/start')
+async def start_reels_processing(username: str):
+    """Start the actor asynchronously"""
+    try:
+        run_input = {
+            'username': [username],
+            'resultsLimit': 3,
+        }
+        run = client.actor("xMc5Ga1oCONPmWJIa").start(run_input=run_input)
+        return {"message": "Actor started", "runId": run["id"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error starting the actor: {str(e)}")
+
+@app.get('/api/reels/{run_id}/status')
+async def get_actor_status(run_id: str):
+    """Check the status of the actor run"""
+    try:
+        run = client.run(run_id).get()
+        if run["status"] == "SUCCEEDED":
+            dataset_id = run["defaultDatasetId"]
+            reels = []
+            for item in client.dataset(dataset_id).iterate_items():
+                reels.append({
+                    "type": item.get("type"),
+                    "media_url": item.get("videoUrl") or item.get("imageUrl"),
+                    "post_url": item.get("url"),
+                })
+            save_data_to_file(reels)
+
+            return reels
+        return {"status": run["status"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching actor status: {str(e)}")
+
+
+@app.get('/api/reels')
+async def get_saved_reels():
+    """ Endpoint to get the data from the json file """
+    try:
+        data = load_data_from_file()
+        if not data:
+            raise HTTPException(status_code=404, detail="No reels data found.")
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading saved reels: {str(e)}")
 
 
 @app.get('/api/reels/{username}')
@@ -73,14 +118,3 @@ async def get_reels (username: str):
 
     except Exception as e:
         raise HTTPException(status_code=500,detail=f"Error fetching reels: {str(e)}")
-
-@app.get('/api/reels')
-async def get_saved_reels():
-    """ Endpoint to get the data from the json file """
-    try:
-        data = load_data_from_file()
-        if not data:
-            raise HTTPException(status_code=404, detail="No reels data found.")
-        return data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading saved reels: {str(e)}")
