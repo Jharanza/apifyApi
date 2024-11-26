@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from apify_client import ApifyClient
 from fastapi.middleware.cors import CORSMiddleware
+from apify_client import ApifyClient
 from decouple import config
 from pathlib import Path
 import json
+
 
 
 app = FastAPI()
@@ -30,7 +31,7 @@ DATA_FILE = Path('reels_data_json')
 @app.get("/")
 async def root():
     """ Ruta raíz """
-    return {"message": "Api ok"}
+    return {"message": "Cors correctly configured"}
 
 
 def save_data_to_file (data):
@@ -52,7 +53,7 @@ async def get_reels (username: str):
     """ Endpoint to get the lasts reels and save it in a json file """
     try:
         run_input = {
-            'username': ['hotelzamora'],
+            'username': [username],
             'resultsLimit': 3,
         }
 
