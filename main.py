@@ -1,8 +1,20 @@
 from fastapi import FastAPI, HTTPException
 from apify_client import ApifyClient
+from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
 from pathlib import Path
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Cambiar "*" por un dominio específico si es necesario
+    allow_credentials=True,
+    allow_methods=["*"],  # Métodos HTTP permitidos
+    allow_headers=["*"],  # Cabeceras HTTP permitidas
+)
+
 
 API_TOKEN = os.getenv('API_TOKEN')
 
@@ -10,10 +22,6 @@ if not API_TOKEN:
     raise ValueError('The token is not configured')
 
 client = ApifyClient(API_TOKEN)
-
-
-
-app = FastAPI()
 
 DATA_FILE = Path('reels_data_json')
 
