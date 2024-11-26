@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from apify_client import ApifyClient
 from fastapi.middleware.cors import CORSMiddleware
-import json
-import os
+from decouple import config
 from pathlib import Path
+import json
+
 
 app = FastAPI()
 
@@ -16,7 +17,8 @@ app.add_middleware(
 )
 
 
-API_TOKEN = os.getenv('API_TOKEN')
+
+API_TOKEN = config('token')
 
 if not API_TOKEN:
     raise ValueError('The token is not configured')
