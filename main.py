@@ -18,7 +18,7 @@ app.add_middleware(
 
 
 
-API_TOKEN = config('token')
+API_TOKEN = config('API_TOKEN')
 
 if not API_TOKEN:
     raise ValueError('The token is not configured')
