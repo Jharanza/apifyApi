@@ -1,10 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from apify_client import ApifyClient
 import json
+import os
 from pathlib import Path
 
-API_TOKEN = "apify_api_7oOQ8c8pTtjyDGTVr113OCzETU8NAh4saRLA"
+API_TOKEN = os.getenv('API_TOKEN')
+
+if not API_TOKEN:
+    raise ValueError('The token is not configured')
+
 client = ApifyClient(API_TOKEN)
+
+
 
 app = FastAPI()
 
