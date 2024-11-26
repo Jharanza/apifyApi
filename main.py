@@ -2,8 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from apify_client import ApifyClient
 from decouple import config
-from pathlib import Path
-import json
 
 
 app = FastAPI()
@@ -25,21 +23,7 @@ if not API_TOKEN:
 
 client = ApifyClient(API_TOKEN)
 
-DATA_FILE = Path('reels_data_json')
-
-
-def save_data_to_file (data):
-    """ Save the data into a json file """
-    with open(DATA_FILE, 'w', encoding='utf-8') as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
-
-
-def load_data_from_file ():
-    """ Get the data from the json file """
-    if DATA_FILE.exists():
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
+reels_storage = {}
 
 @app.get("/")
 async def root():
@@ -59,6 +43,8 @@ async def start_reels_processing(username: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting the actor: {str(e)}")
 
+
+
 @app.get('/api/reels/{run_id}/status')
 async def get_actor_status(run_id: str):
     """Check the status of the actor run"""
@@ -73,7 +59,7 @@ async def get_actor_status(run_id: str):
                     "media_url": item.get("videoUrl") or item.get("imageUrl"),
                     "post_url": item.get("url"),
                 })
-            save_data_to_file(reels)
+            reels_storage[run_id] = reels
 
             return reels
         return {"status": run["status"]}
@@ -83,15 +69,19 @@ async def get_actor_status(run_id: str):
 
 @app.get('/api/reels')
 async def get_saved_reels():
-    """ Endpoint to get the data from the json file """
+    """Endpoint to get all saved reels from in-memory storage"""
     try:
-        data = load_data_from_file()
-        if not data:
+        if not reels_storage:
             raise HTTPException(status_code=404, detail="No reels data found.")
-        return data
+        
+        # Combina todos los reels almacenados para diferentes IDs o usernames
+        all_reels = []
+        for key, reels in reels_storage.items():
+            all_reels.extend(reels)
+        
+        return all_reels
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading saved reels: {str(e)}")
-
 
 @app.get('/api/reels/{username}')
 async def get_reels (username: str):
@@ -112,7 +102,7 @@ async def get_reels (username: str):
                 "post_url": item.get("url"),
             })
             
-        save_data_to_file(latest_reels)
+        reels_storage[username] = latest_reels
 
         return latest_reels
 
